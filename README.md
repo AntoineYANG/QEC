@@ -1,2 +1,2 @@
-# QEC
+# Zone
 An editor powered by Electron
