@@ -44,7 +44,7 @@ div.header-btn-groups {
 div.windowbutton {
   width: 28.7px;
 }
-div.windowbutton:hover {
+div.windowbutton svg:hover {
   background-image: radial-gradient(
     circle at 50% 90%,
   rgba(154, 184, 197, 0.8),
@@ -53,16 +53,12 @@ div.windowbutton:hover {
   );
 }
 
-div.windowbutton svg {
-  pointer-events: none;
-}
-
 div.windowbutton svg path {
   stroke: rgb(170, 175, 180);
   stroke-width: 2px;
   fill: none;
 }
-div.windowbutton:hover svg path {
+div.windowbutton svg:hover path {
   stroke: rgb(70, 161, 223);
   stroke-width: 4px;
 }

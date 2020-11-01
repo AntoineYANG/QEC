@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 22:31:38 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-22 02:32:29
+ * @Last Modified time: 2020-10-28 20:45:45
  */
 
 import $ from "jquery";
@@ -111,10 +111,12 @@ export const initHotKeyListeners = (target: string, blockAllDefaultBehaviours: b
     
     $(target)[0].addEventListener("keydown", (e: KeyboardEvent) => {
         const key: KeyName | undefined = keyMap[e.which];
-        if (blockAllDefaultBehaviours && key) {
+        if (key === "tab" || (blockAllDefaultBehaviours && key)) {
             e.preventDefault();
         }
-        keyStack.push([key, true]);
+        if (!keyStack.length || keyStack[keyStack.length - 1][0] !== key) {
+            keyStack.push([key, true]);
+        }
     });
     
     $(target)[0].addEventListener("keyup", (e: KeyboardEvent) => {

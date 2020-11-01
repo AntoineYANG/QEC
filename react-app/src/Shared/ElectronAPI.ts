@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 23:51:49 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-22 00:23:08
+ * @Last Modified time: 2020-10-28 19:05:56
  */
 
 import { BrowserWindow } from "electron";

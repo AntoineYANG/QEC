@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 18:57:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-21 23:51:21
+ * @Last Modified time: 2020-10-28 19:05:42
  */
 
 const { app, BrowserWindow } = require('electron');
@@ -21,6 +21,7 @@ function createWindow() {
         frame: false,
         backgroundColor: "rgb(0,14,17)",
         webPreferences: {
+            // devTools: false,
             nodeIntegration: true
         }
     });
