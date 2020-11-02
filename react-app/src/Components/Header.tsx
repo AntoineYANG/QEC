@@ -2,24 +2,27 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 20:21:11 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-28 19:14:54
+ * @Last Modified time: 2020-11-03 00:04:32
  */
 
 import React, { Component } from "react";
 import { WindowButton } from "./WindowButton";
-import { getWindow, ElectronWindowIsMaximized, ElectronMinimize, ElectronMaximize, ElectronClose } from "../Shared/ElectronAPI";
 
 
 export interface HeaderProps {};
 
-export interface HeaderState {};
+export interface HeaderState {
+    path: string | undefined;
+};
 
 export class Header extends Component<HeaderProps, HeaderState> {
 
     public constructor(props: HeaderProps) {
         super(props);
 
-        this.state = {};
+        this.state = {
+            path: undefined
+        };
     }
 
     public render(): JSX.Element {
@@ -46,35 +49,37 @@ export class Header extends Component<HeaderProps, HeaderState> {
                         overflow: "hidden",
                         textOverflow: "ellipsis"
                     }} >
-                        Start with new file
+                        { this.state.path ?? "Start with new file" }
                     </label>
                 </div>
-                <div key="right" className="header-btn-groups" >
+                <div key="right" className="header-btn-groups" style={{
+                    display: "none"
+                }} >
                     <WindowButton key="minimize" name="minimize"
                     path="M28,50 L72,50"
                     trigger={
                         () => {
-                            ElectronMinimize();
+                            // ElectronMinimize();
                         }
                     } />
                     <WindowButton key="maximize" name={
-                        ElectronWindowIsMaximized ? "maximize" : "unmaximize"
+                        0 ? "maximize" : "unmaximize"
                     }
                     path={
-                        ElectronWindowIsMaximized ? (
+                        0 ? (
                             "M28,46 L60,46 L60,70 L28,70 Z M38,36 L70,36 L70,58 L38,58 Z"
                         ) : "M30,34 L70,34 L70,69 L30,69 Z"
                     }
                     trigger={
                         () => {
-                            ElectronMaximize();
+                            // ElectronMaximize();
                         }
                     } />
                     <WindowButton key="close" name="close"
                     path="M32,32 L68,68 M32,68 L68,32"
                     trigger={
                         () => {
-                            ElectronClose();
+                            // ElectronClose();
                         }
                     } />
                 </div>
@@ -83,7 +88,7 @@ export class Header extends Component<HeaderProps, HeaderState> {
     }
 
     public componentDidMount(): void {
-        getWindow()?.on("maximize", () => this.forceUpdate());
+        // getWindow()?.on("maximize", () => this.forceUpdate());
     }
 
 };

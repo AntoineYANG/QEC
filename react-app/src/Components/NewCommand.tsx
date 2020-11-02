@@ -2,14 +2,14 @@
  * @Author: Kanata You 
  * @Date: 2020-10-22 00:32:54 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-02 01:47:25
+ * @Last Modified time: 2020-11-03 00:09:06
  */
 
 import React, { Component } from "react";
 import $ from "jquery";
 import { addHotKey, removeHotKey, initHotKeyListeners } from "../Shared/Listeners";
-import { CommandDict, parseParams } from "../Handlers/CommandParser";
 import { AutoCompleter } from "./AutoCompleter";
+import { CommandDict, parseParams } from "../Handlers/CommandParser";
 
 
 export interface NewCommandProps {};
@@ -86,33 +86,17 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
         addHotKey(`#command-box-${ this.containerID }`, ["tab"], () => {
             const autoCompleter = AutoCompleter.getRef();
             if (autoCompleter) {
-                const name = autoCompleter.state.list[autoCompleter.state.focusIdx];
-                if (name) {
-                    const val: string = (
+                if (autoCompleter.state.list.length === 1 && autoCompleter.state.list2.length) {
+                    let res = autoCompleter.state.list2[autoCompleter.state.focusIdx2];
+                    res = (
                         $(`#command-box-${ this.containerID } input`).val()! as string
-                    ).trimLeft();
-                    if (val.includes(" ")) {
-                        const curParam = autoCompleter.state.currentParam;
-                        if (curParam !== null) {
-                            // const getter = parseParams(CommandDict[name], val);
-                            // let check: (input: string) => Array<string> = () => [];
-                            // if (typeof curParam === "string") {
-                            //     check = CommandDict[name].args.filter(
-                            //         d => d.name === name
-                            //     )[0].autoComplete || check;
-                            // } else if (curParam - 1 < CommandDict[name].params.length) {
-                            //     check = CommandDict[name].params[
-                            //         curParam - 1
-                            //     ].autoComplete || check;
-                            // }
-                            // console.log(check(val));
-                        }
-                    } else {
-                        $(`#command-box-${ this.containerID } input`).val(
-                            name + " "
-                        );
-                        this.parse(name + " ");
-                    }
+                    ).split(/ {1,}/).reverse().slice(1).reverse().join(" ") + " " + res;
+                    $(`#command-box-${ this.containerID } input`).val(res);
+                    this.parse(res);
+                } else {
+                    const res = autoCompleter.state.list[autoCompleter.state.focusIdx] + " ";
+                    $(`#command-box-${ this.containerID } input`).val(res);
+                    this.parse(res);
                 }
             }
         }, 10);
@@ -135,11 +119,19 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
                 this.parse(cmd);
                 this.historyLock = true;
             } else if (autoCompleter && autoCompleter.state.list.length) {
-                autoCompleter.setState({
-                    focusIdx: (
-                        autoCompleter.state.list.length + autoCompleter.state.focusIdx - 1
-                    ) % autoCompleter.state.list.length
-                });
+                if (autoCompleter.state.list.length === 1 && autoCompleter.state.list2.length) {
+                    autoCompleter.setState({
+                        focusIdx2: (
+                            autoCompleter.state.list2.length + autoCompleter.state.focusIdx2 - 1
+                        ) % autoCompleter.state.list2.length
+                    });
+                } else {
+                    autoCompleter.setState({
+                        focusIdx: (
+                            autoCompleter.state.list.length + autoCompleter.state.focusIdx - 1
+                        ) % autoCompleter.state.list.length
+                    });
+                }
             }
         }, 10);
         addHotKey(`#command-box-${ this.containerID }`, ["down"], () => {
@@ -157,11 +149,19 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
                     this.parse(cmd);
                 }
             } else if (autoCompleter && autoCompleter.state.list.length) {
-                autoCompleter.setState({
-                    focusIdx: (
-                        autoCompleter.state.focusIdx + 1
-                    ) % autoCompleter.state.list.length
-                });
+                if (autoCompleter.state.list.length === 1 && autoCompleter.state.list2.length) {
+                    autoCompleter.setState({
+                        focusIdx2: (
+                            autoCompleter.state.focusIdx2 + 1
+                        ) % autoCompleter.state.list2.length
+                    });
+                } else {
+                    autoCompleter.setState({
+                        focusIdx: (
+                            autoCompleter.state.focusIdx + 1
+                        ) % autoCompleter.state.list.length
+                    });
+                }
             }
         }, 10);
         addHotKey(`#command-box-${ this.containerID }`, ["enter"], () => {
@@ -218,11 +218,25 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
 
     protected run(): void {
         const command: string = $(`#command-box-${ this.containerID } input`).val()! as string | "";
+
+        if (AutoCompleter.getRef()?.state.list.length === 1) {
+            const name = AutoCompleter.getRef()!.state.list[0];
+            if (name && CommandDict[name]) {
+                CommandDict[name].execute(parseParams(CommandDict[name], command));
+            } else {
+                console.error(`Can't resolve command: ${ command }`);
+            }
+        } else {
+            console.error(`Can't resolve command: ${ command }`);
+        }
         
         this.history = [...this.history, command].slice(0, 10);
 
         $(`#command-box-${ this.containerID } input`).val("");
-        this.parse("");
+
+        this.setState({
+            active: false
+        });
     }
 
 };

@@ -2,17 +2,22 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 18:57:20 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-28 19:05:42
+ * @Last Modified time: 2020-11-02 14:59:25
  */
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 
 
-var win;
+let mainWindow = null;
 
 
-function createWindow() {
-    win = new BrowserWindow({
+const createMainWindow = () => {
+    if (mainWindow) {
+        mainWindow.show();
+        return;
+    }
+
+    mainWindow = new BrowserWindow({
         title: "Zone",
         width: 900,
         height: 640,
@@ -26,8 +31,15 @@ function createWindow() {
         }
     });
 
-    win.loadFile('index.html');
-    win.webContents.openDevTools();
+    mainWindow.loadFile('index.html');
+    mainWindow.webContents.openDevTools();
+
+    ipcMain.on("synchronous-message", (event, arg) => {
+        if (arg === "close") {
+            mainWindow.close();
+        }
+        event.returnValue = arg;
+    });
 }
 
 app.on('window-all-closed', () => {
@@ -43,4 +55,7 @@ app.on('activate', () => {
 });
 
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createMainWindow);
+
+
+module.exports.createMainWindow = createMainWindow;

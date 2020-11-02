@@ -2,33 +2,75 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 19:20:37 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-02 01:42:56
+ * @Last Modified time: 2020-11-02 23:58:17
  */
 
-export type Command = {
+
+import axios from "axios";
+import { encodeIPC } from "../Shared/Helper";
+import { Main } from "../WindowAppearance/Main";
+
+
+export type Command<P extends string | never = string, A extends string | never = string> = {
     params: Array<{
-        name: string;
+        name: P;
         description: string;
-        autoComplete?: (input: string) => Array<string>;
+        autoComplete?: (input: string) => Promise<string[]>;
     }>;
     args: Array<{
-        name: string;
+        name: A;
         requireValue: boolean;
         description: string;
-        autoComplete?: (input: string) => Array<string>;
+        autoComplete?: (input: string) => Promise<string[]>;
     }>;
     description: string;
-    execute: (params: Array<string>, args: {[keyname: string]: string;}) => void;
+    execute: (paramParser: ParamParser<P, A>) => void;
 };
 
-export let CommandDict: { [name: string]: Command; } = {
+
+const pathAutoComplete = async (input: string) => {
+    input = input.trim();
+    let list: Array<string> = [];
+
+    if (input) {
+        if (input.endsWith("/")) {
+            await axios.get<string[] | null>("/ls/" + encodeIPC(input)).then(value => {
+                if (value && value.data !== null) {
+                    try {
+                        list = value.data.map(d => input + d);
+                    } catch {}
+                }
+            });
+        } else if (input.includes("/")) {
+            const routes = input.split("/");
+            const parent = routes.map(
+                (s, i) => i < routes.length - 1 ? s : ""
+            ).join("/");
+            const current = routes[routes.length - 1];
+            const pattern = new RegExp(current.toLowerCase().split("").join(".*"));
+            await axios.get<string[] | null>("/ls/" + encodeIPC(parent)).then(value => {
+                if (value && value.data !== null) {
+                    try {
+                        list = value.data.filter(
+                            d => pattern.test(d.toLowerCase())
+                        ).map(
+                            d => parent + d
+                        );
+                    } catch {}
+                }
+            });
+        }
+    }
+    
+    return list;
+};
+
+export const CommandDict: {[name: string]: Command<string | never, string | never>;} = {
     op: {
         params: [{
             name: "filename",
             description: "the file you want to open",
-            autoComplete: (input: string) => {
-                return [];
-            }
+            autoComplete: pathAutoComplete
         }],
         args: [{
             name: "-e",
@@ -40,38 +82,48 @@ export let CommandDict: { [name: string]: Command; } = {
             description: "clear the file if it has already exist"
         }],
         description: "Open or create a file to edit.",
-        execute: (params: Array<string>, args: {[keyname: string]: string;}) => {}
+        execute: (paramParser: ParamParser<"filename", "-e" | "-clear">) => {
+            const filename: string = paramParser.getParam("filename") || "";
+            const existedOnly: boolean = paramParser.getArgs("-e") !== undefined;
+            const clearWhenOpen: boolean = paramParser.getArgs("-clear") !== undefined;
+
+            axios.get<{ path: string; data: string; }>(
+                `/op/${ encodeIPC(filename) }/${ existedOnly ? 1 : 0 }/${ clearWhenOpen ? 1 : 0 }`
+            ).then(value => {
+                Main.loadFile(value.data);
+            }).catch(err => {
+                console.error("command op", err)
+            });
+        }
     },
     opdir: {
         params: [{
             name: "foldername",
             description: "the folder you want to open",
-            autoComplete: (input: string) => {
-                return [];
-            }
+            autoComplete: pathAutoComplete
         }],
         args: [],
         description: "Open a folder to edit.",
-        execute: (params: Array<string>, args: {[keyname: string]: string;}) => {}
+        execute: (_paramParser: ParamParser<"foldername", never>) => {}
     },
     opwsp: {
         params: [{
             name: "filename",
             description: "the workspace you want to open",
-            autoComplete: (input: string) => {
-                return [];
-            }
+            autoComplete: pathAutoComplete
         }],
         args: [],
         description: "Open a workspace to edit.",
-        execute: (params: Array<string>, args: {[keyname: string]: string;}) => {}
+        execute: (_paramParser: ParamParser<"filename", never>) => {}
     }
 };
 
-export const parseParams = <P extends string, A extends string>(cmd: Command, input: string): {
+export type ParamParser<P extends string, A extends string> = {
     getParam: (p: P) => string | undefined;
     getArgs: (a: A) => string | undefined | true;
-} => {
+};
+
+export const parseParams = <P extends string, A extends string>(cmd: Command, input: string): ParamParser<P, A> => {
     let params: {[name: string]: string} = {};
     let args: {[name: string]: string | true} = {};
 
@@ -102,8 +154,6 @@ export const parseParams = <P extends string, A extends string>(cmd: Command, in
             }
         }
     });
-
-    console.log(params, args);
 
     return {
         getParam: (p: P) => params[p],

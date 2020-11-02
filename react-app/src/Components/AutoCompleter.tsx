@@ -2,12 +2,12 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 20:08:55 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-10-28 20:55:58
+ * @Last Modified time: 2020-11-02 23:16:04
  */
 
 import React, { Component } from "react";
 import $ from "jquery";
-import { CommandDict } from "../Handlers/CommandParser";
+import { CommandDict, parseParams } from "../Handlers/CommandParser";
 
 
 export interface AutoCompleterProps {};
@@ -17,8 +17,10 @@ export interface AutoCompleterState {
     x: number;
     y: number;
     list: Array<string>;
+    list2: Array<string>;
     currentParam: null | number | string;
     focusIdx: number;
+    focusIdx2: number;
 };
 
 export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterState> {
@@ -55,27 +57,78 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                         }
                     });
 
+                    const curParam: number | string | null = ((
+                        argName as string | null
+                    ) ?? paramIdx) || null;
+
                     AutoCompleter.currentRef.setState({
                         list: [name],
-                        currentParam: argName ?? paramIdx,
+                        list2: [],
+                        focusIdx: 0,
+                        focusIdx2: 0,
+                        currentParam: curParam,
                         active: true,
                         x: x || AutoCompleter.currentRef.state.x,
                         y: y || AutoCompleter.currentRef.state.y
                     });
+
+                    if (curParam) {
+                        const getter = parseParams(CommandDict[name], value);
+
+                        if (typeof curParam === "string") {
+                            const check = CommandDict[name].args.filter(
+                                d => d.name === curParam
+                            )[0].autoComplete;
+
+                            if (check) {
+                                check(getter.getParam(curParam) || "").then(value => {
+                                    if (value) {
+                                        AutoCompleter.currentRef?.setState({
+                                            list2: value,
+                                            focusIdx2: 0,
+                                            active: true
+                                        });
+                                    }
+                                });
+                            }
+                        } else if (curParam - 1 < CommandDict[name].params.length) {
+                            const check = CommandDict[name].params[
+                                curParam - 1
+                            ].autoComplete;
+                            
+                            if (check) {
+                                check(getter.getParam(
+                                    CommandDict[name].params[curParam - 1].name
+                                ) || "").then(value => {
+                                    if (value) {
+                                        AutoCompleter.currentRef?.setState({
+                                            list2: value,
+                                            focusIdx2: 0,
+                                            active: true
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    }
                 } else {
                     AutoCompleter.currentRef.setState({
                         list: [],
+                        list2: [],
+                        focusIdx: 0,
+                        focusIdx2: 0,
                         currentParam: null,
                         active: false
                     });
                 }
             } else {
-                const pattern = new RegExp(value.split("").join(".*"));
+                const pattern = new RegExp(value.split("").join(".*").toLowerCase());
 
                 AutoCompleter.currentRef.setState({
                     list: Object.keys(CommandDict).filter(
-                        keyname => pattern.test(keyname)
+                        keyname => pattern.test(keyname.toLowerCase())
                     ),
+                    focusIdx: 0,
                     currentParam: null,
                     active: true,
                     x: x || AutoCompleter.currentRef.state.x,
@@ -100,8 +153,10 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
             x: 200,
             y: 200,
             list: [],
+            list2: [],
             currentParam: null,
-            focusIdx: 0
+            focusIdx: 0,
+            focusIdx2: 0
         };
     }
 
@@ -117,6 +172,26 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                 )[0].description;
             } else if (currentCmd.params.length > this.state.currentParam - 1) {
                 currentDescr = currentCmd.params[this.state.currentParam - 1].description;
+            }
+        }
+
+        const srcList = this.state.currentParam ? this.state.list2 : this.state.list;
+        
+        const count: number = srcList.length;
+        const maxPerPage: number = 10;
+
+        const startIdx: number = Math.floor(
+            (this.state.currentParam ? this.state.focusIdx2 : this.state.focusIdx)
+            / maxPerPage
+        ) * maxPerPage;
+
+        let list: Array<string> = [];
+
+        if (count <= maxPerPage) {
+            list = this.state.currentParam ? this.state.list2 : this.state.list;
+        } else {
+            for (let i: number = startIdx; i < startIdx + maxPerPage && i < count; i++) {
+                list.push(srcList[i])
             }
         }
 
@@ -222,7 +297,7 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                             }
                         </div>
                     ) : (
-                        <div key="unknow" style={{
+                        <div key="unknown" style={{
                             color: "rgb(64,172,225)",
                             border: `1px solid rgb(91,95,97)`,
                             borderBottom: "none",
@@ -237,7 +312,7 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                     )
                 }
                 {
-                    this.state.currentParam === null ? (
+                    this.state.list.length ? (
                         <div key="list" style={{
                             display: "flex",
                             flexDirection: "column",
@@ -247,36 +322,81 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                             background: `rgb(26,29,33)`
                         }} >
                         {
-                            this.state.list.map((item, i) => {
-                                return (
-                                    <div key={ i }
-                                    style={{
-                                        display: "flex"
+                            count > maxPerPage ? (
+                                <div key="page-count" style={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                    fontWeight: "normal",
+                                    color: "rgb(200,200,200)"
+                                }} >
+                                    <label style={{
+                                        display: "inline-block",
+                                        padding: "0.2em 1em",
+                                        width: "6em",
+                                        textAlign: "right"
                                     }} >
-                                        <label key="name" style={{
-                                            display: "inline-block",
-                                            padding: "0.3em 1em",
-                                            width: "6em",
-                                            background: i === this.state.focusIdx ? (
-                                                "rgb(52,57,64)"
-                                            ) : ""
+                                    {
+                                        `${ (
+                                            this.state.currentParam ? this.state.focusIdx2 : this.state.focusIdx
+                                        ) + 1 }/${ count }`
+                                    }
+                                    </label>
+                                </div>
+                            ) : null
+                        }
+                        {
+                            this.state.currentParam === null ? (
+                                list.map((item, i) => {
+                                    return (
+                                        <div key={ i }
+                                        style={{
+                                            display: "flex"
                                         }} >
-                                            { item }
-                                        </label>
-                                        <label key="descri" style={{
-                                            display: "inline-block",
-                                            padding: "0.3em 1em",
-                                            width: "24em",
-                                            background: i === this.state.focusIdx ? (
-                                                "rgb(52,57,64)"
-                                            ) : "",
-                                            fontWeight: "normal"
+                                            <label key="name" style={{
+                                                display: "inline-block",
+                                                padding: "0.3em 1em",
+                                                width: "6em",
+                                                background: i + startIdx === this.state.focusIdx ? (
+                                                    "rgb(52,57,64)"
+                                                ) : ""
+                                            }} >
+                                                { item }
+                                            </label>
+                                            <label key="descri" style={{
+                                                display: "inline-block",
+                                                padding: "0.3em 1em",
+                                                width: "24em",
+                                                background: i + startIdx === this.state.focusIdx ? (
+                                                    "rgb(52,57,64)"
+                                                ) : "",
+                                                fontWeight: "normal"
+                                            }} >
+                                                { CommandDict[item].description }
+                                            </label>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                list.map((item, i) => {
+                                    return (
+                                        <div key={ i }
+                                        style={{
+                                            display: "flex"
                                         }} >
-                                            { CommandDict[item].description }
-                                        </label>
-                                    </div>
-                                );
-                            })
+                                            <label key="name" style={{
+                                                display: "inline-block",
+                                                padding: "0.12em 1em",
+                                                width: "31.4em",
+                                                background: i + startIdx === this.state.focusIdx2 ? (
+                                                    "rgb(52,57,64)"
+                                                ) : ""
+                                            }} >
+                                                { item.split("/").reverse()[0] }
+                                            </label>
+                                        </div>
+                                    );
+                                })
+                            )
                         }
                         </div>
                     ) : null
