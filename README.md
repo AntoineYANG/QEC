@@ -1,2 +1,2 @@
 # Zone
-An editor powered by Electron
+An editor powered by NodeJS

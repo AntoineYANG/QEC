@@ -2,10 +2,11 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 20:18:13 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-03 00:03:57
+ * @Last Modified time: 2020-11-09 13:35:26
  */
 
 import React, { Component } from "react";
+import axios from "axios";
 import { Header } from "../Components/Header";
 import { addHotKey, removeHotKey } from "../Shared/Listeners";
 import { NewCommand } from "../Components/NewCommand";
@@ -51,11 +52,17 @@ export class Main extends Component<MainProps, MainState> {
         });
     }
 
+    public static openCmd(): void {
+        this.curRef?.newCommand.current?.create();
+    }
+
     public componentDidMount(): void {
         Main.curRef = this;
         addHotKey("body", ["ctrl", "enter"], () => {
             this.newCommand.current?.create();
         }, 5);
+
+        axios.get(`/initConfig`);
     }
 
     public componentWillUnmount(): void {

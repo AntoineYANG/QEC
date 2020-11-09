@@ -2,19 +2,21 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 19:20:37 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-02 23:58:17
+ * @Last Modified time: 2020-11-09 15:23:34
  */
 
 
 import axios from "axios";
 import { encodeIPC } from "../Shared/Helper";
 import { Main } from "../WindowAppearance/Main";
+import { Editor } from "../Components/Editor";
 
 
 export type Command<P extends string | never = string, A extends string | never = string> = {
     params: Array<{
         name: P;
         description: string;
+        default?: string;
         autoComplete?: (input: string) => Promise<string[]>;
     }>;
     args: Array<{
@@ -84,8 +86,8 @@ export const CommandDict: {[name: string]: Command<string | never, string | neve
         description: "Open or create a file to edit.",
         execute: (paramParser: ParamParser<"filename", "-e" | "-clear">) => {
             const filename: string = paramParser.getParam("filename") || "";
-            const existedOnly: boolean = paramParser.getArgs("-e") !== undefined;
-            const clearWhenOpen: boolean = paramParser.getArgs("-clear") !== undefined;
+            const existedOnly = paramParser.getArgs("-e");
+            const clearWhenOpen = paramParser.getArgs("-clear");
 
             axios.get<{ path: string; data: string; }>(
                 `/op/${ encodeIPC(filename) }/${ existedOnly ? 1 : 0 }/${ clearWhenOpen ? 1 : 0 }`
@@ -115,6 +117,33 @@ export const CommandDict: {[name: string]: Command<string | never, string | neve
         args: [],
         description: "Open a workspace to edit.",
         execute: (_paramParser: ParamParser<"filename", never>) => {}
+    },
+    s: {
+        params: [{
+            name: "filename",
+            default: "OVERWRITE",
+            description: "the new filename to be saved as, default to overwrite",
+            autoComplete: pathAutoComplete
+        }],
+        args: [],
+        description: "Save the current editing file.",
+        execute: (paramParser: ParamParser<"filename", never>) => {
+            if (Editor.curRef?.state.file) {
+                const filename: string = paramParser.getParam("filename") || "";
+    
+                axios.post<{ path: string; data: string; }>(
+                    `/s/${
+                        encodeIPC(Editor.curRef.state.file.path)
+                    }/${
+                        encodeIPC(filename) || "OVERWRITE"
+                    }`, {
+                        data: Editor.getData()
+                    }
+                ).catch(err => {
+                    console.error("command s", err)
+                });
+            }
+        }
     }
 };
 

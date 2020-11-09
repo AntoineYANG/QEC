@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 20:21:11 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-03 00:04:32
+ * @Last Modified time: 2020-11-09 11:44:28
  */
 
 import React, { Component } from "react";
@@ -45,7 +45,7 @@ export class Header extends Component<HeaderProps, HeaderState> {
                         display: "inline-block",
                         transform: "translateY(1.8px)",
                         margin: "0 2em",
-                        width: "35vw",
+                        width: "calc(100vw - 175px)",
                         overflow: "hidden",
                         textOverflow: "ellipsis"
                     }} >

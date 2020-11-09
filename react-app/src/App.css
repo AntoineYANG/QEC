@@ -36,6 +36,7 @@ div.header {
 div.header-strip {
   margin: 0;
   flex: 1;
+  display: flex;
 }
 
 div.header-btn-groups {

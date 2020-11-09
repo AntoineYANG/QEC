@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 20:08:55 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-02 23:16:04
+ * @Last Modified time: 2020-11-09 13:51:34
  */
 
 import React, { Component } from "react";
@@ -122,18 +122,40 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                     });
                 }
             } else {
-                const pattern = new RegExp(value.split("").join(".*").toLowerCase());
+                const name = value.trim();
+                const pattern = new RegExp(name.split("").join(".*").toLowerCase());
 
-                AutoCompleter.currentRef.setState({
-                    list: Object.keys(CommandDict).filter(
-                        keyname => pattern.test(keyname.toLowerCase())
-                    ),
-                    focusIdx: 0,
-                    currentParam: null,
-                    active: true,
-                    x: x || AutoCompleter.currentRef.state.x,
-                    y: y || AutoCompleter.currentRef.state.y
-                });
+                if (CommandDict[name]) {
+                    AutoCompleter.currentRef.setState({
+                        list: [name].concat(
+                            Object.keys(CommandDict).filter(
+                                keyname => pattern.test(
+                                    keyname.toLowerCase()
+                                ) && keyname !== name
+                            ).sort(
+                                (a, b) => a.length - b.length
+                            )
+                        ),
+                        focusIdx: 0,
+                        currentParam: null,
+                        active: true,
+                        x: x || AutoCompleter.currentRef.state.x,
+                        y: y || AutoCompleter.currentRef.state.y
+                    });
+                } else {
+                    AutoCompleter.currentRef.setState({
+                        list: Object.keys(CommandDict).filter(
+                            keyname => pattern.test(keyname.toLowerCase())
+                        ).sort(
+                            (a, b) => a.length - b.length
+                        ),
+                        focusIdx: 0,
+                        currentParam: null,
+                        active: true,
+                        x: x || AutoCompleter.currentRef.state.x,
+                        y: y || AutoCompleter.currentRef.state.y
+                    });
+                }
             }
         }
     }
@@ -227,13 +249,21 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                                                     <b>
                                                         { " " }
                                                         <u>
-                                                            { `[${ d.name }]` }
+                                                            { `[${ d.name + (
+                                                                d.default ? `=${
+                                                                    d.default
+                                                                }` : ""
+                                                            ) }]` }
                                                         </u>
                                                     </b>
                                                 </span>
                                             ) : (
                                                 <span key={ `param_${ i }` } >
-                                                    { ` [${ d.name }]` }
+                                                    { ` [${ d.name + (
+                                                        d.default ? `=${
+                                                            d.default
+                                                        }` : ""
+                                                    ) }]` }
                                                 </span>
                                             )
                                         )

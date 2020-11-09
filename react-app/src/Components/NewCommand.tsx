@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-22 00:32:54 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-03 00:09:06
+ * @Last Modified time: 2020-11-09 13:40:26
  */
 
 import React, { Component } from "react";
@@ -170,9 +170,11 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
     }
 
     public componentDidUpdate(): void {
+        $(`#command-box-${ this.containerID } input`).val("");
         if (this.state.active) {
-            $(`#command-box-${ this.containerID } input`).val("").focus();
+            $(`#command-box-${ this.containerID } input`).focus();
         }
+        AutoCompleter.hide();
     }
 
     public componentWillUnmount(): void {
@@ -219,7 +221,14 @@ export class NewCommand extends Component<NewCommandProps, NewCommandState> {
     protected run(): void {
         const command: string = $(`#command-box-${ this.containerID } input`).val()! as string | "";
 
-        if (AutoCompleter.getRef()?.state.list.length === 1) {
+        if (!command.trim().includes(" ")) {
+            const name = command.trim();
+            if (name && CommandDict[name]) {
+                CommandDict[name].execute(parseParams(CommandDict[name], command));
+            } else {
+                console.error(`Can't resolve command: ${ command }`);
+            }
+        } else if (AutoCompleter.getRef()?.state.list.length === 1) {
             const name = AutoCompleter.getRef()!.state.list[0];
             if (name && CommandDict[name]) {
                 CommandDict[name].execute(parseParams(CommandDict[name], command));
