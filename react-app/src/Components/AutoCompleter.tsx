@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 20:08:55 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-09 13:51:34
+ * @Last Modified time: 2020-11-10 14:29:13
  */
 
 import React, { Component } from "react";
@@ -123,7 +123,9 @@ export class AutoCompleter extends Component<AutoCompleterProps, AutoCompleterSt
                 }
             } else {
                 const name = value.trim();
-                const pattern = new RegExp(name.split("").join(".*").toLowerCase());
+                const pattern = new RegExp(
+                    name.split("").filter(d => /[a-zA-Z0-9]/.test(d)).join(".*").toLowerCase()
+                );
 
                 if (CommandDict[name]) {
                     AutoCompleter.currentRef.setState({

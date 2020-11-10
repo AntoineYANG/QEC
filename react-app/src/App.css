@@ -23,6 +23,10 @@ label {
   user-select: none;
 }
 
+div::-webkit-scrollbar {
+  display: none;
+}
+
 div.header {
   -webkit-app-region: drag;
   background-color: rgb(48, 50, 51);

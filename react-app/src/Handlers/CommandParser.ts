@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-28 19:20:37 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-09 15:23:34
+ * @Last Modified time: 2020-11-10 15:03:35
  */
 
 
@@ -68,6 +68,18 @@ const pathAutoComplete = async (input: string) => {
 };
 
 export const CommandDict: {[name: string]: Command<string | never, string | never>;} = {
+    clean: {
+        params: [],
+        args: [],
+        description: "delete all storage files",
+        execute: (_paramParser: ParamParser<never, never>) => {
+            axios.get(`/clearStorage`).then(value => {
+                // console.log(value.data);
+            }).catch(err => {
+                console.error("command clean", err)
+            });
+        }
+    },
     op: {
         params: [{
             name: "filename",
@@ -89,12 +101,16 @@ export const CommandDict: {[name: string]: Command<string | never, string | neve
             const existedOnly = paramParser.getArgs("-e");
             const clearWhenOpen = paramParser.getArgs("-clear");
 
-            axios.get<{ path: string; data: string; }>(
+            axios.get<{ path: string; data: string; } | { errno: number; }>(
                 `/op/${ encodeIPC(filename) }/${ existedOnly ? 1 : 0 }/${ clearWhenOpen ? 1 : 0 }`
             ).then(value => {
-                Main.loadFile(value.data);
+                if ((value.data as { errno: number; }).errno === -4058 && existedOnly) {
+                    console.error("command op", value.data);
+                } else {
+                    Main.loadFile(value.data as { path: string; data: string; });
+                }
             }).catch(err => {
-                console.error("command op", err)
+                console.error("command op", err);
             });
         }
     },
@@ -139,7 +155,19 @@ export const CommandDict: {[name: string]: Command<string | never, string | neve
                     }`, {
                         data: Editor.getData()
                     }
-                ).catch(err => {
+                ).then(() => {
+                    axios.get<{ path: string; data: string; }>(
+                        `/op/${
+                            filename === "OVERWRITE" ? encodeIPC(
+                                Editor.curRef?.state.file?.path || ""
+                            ) : encodeIPC(filename)
+                        }/1/0`
+                    ).then(value => {
+                        Main.loadFile(value.data as { path: string; data: string; });
+                    }).catch(err => {
+                        console.error("command s - reopen", err);
+                    });
+                }).catch(err => {
                     console.error("command s", err)
                 });
             }

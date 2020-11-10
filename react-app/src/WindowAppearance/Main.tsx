@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-10-21 20:18:13 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-09 13:35:26
+ * @Last Modified time: 2020-11-10 14:49:24
  */
 
 import React, { Component } from "react";
@@ -11,6 +11,7 @@ import { Header } from "../Components/Header";
 import { addHotKey, removeHotKey } from "../Shared/Listeners";
 import { NewCommand } from "../Components/NewCommand";
 import { Editor } from "../Components/Editor";
+import { Config } from "../Shared/Types";
 
 
 export interface MainProps {};
@@ -62,7 +63,7 @@ export class Main extends Component<MainProps, MainState> {
             this.newCommand.current?.create();
         }, 5);
 
-        axios.get(`/initConfig`);
+        axios.get<Config>(`/initConfig`);
     }
 
     public componentWillUnmount(): void {

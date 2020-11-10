@@ -1,0 +1,55 @@
+/*
+ * @Author: Kanata You 
+ * @Date: 2020-11-10 16:10:11 
+ * @Last Modified by: Kanata You
+ * @Last Modified time: 2020-11-10 17:54:22
+ */
+
+div.codeCanvas div, div.codeContainer div {
+    display: block;
+    white-space: pre;
+}
+
+*::selection {
+    color: inherit;
+    background-color: rgba(243,241,244,0.3);
+}
+
+code.unknown {
+    color: rgb(255,255,250);
+}
+code.empty_line {
+    display: block;
+}
+
+code.space {
+    color: rgba(255,255,250,0.2);
+}
+code.space::selection {
+    color: rgba(255,255,250,0.8);
+}
+
+code.token {
+    color: rgb(174,173,247);
+}
+code.keyword {
+    color: rgb(100,98,219);
+}
+code.type {
+    color: rgb(150,119,109);
+}
+code.control {
+    color: rgb(209,106,166);
+}
+code.declare {
+    color: rgb(217,191,129);
+}
+code.modifier {
+    color: rgb(120,93,151);
+}
+code.operator {
+    color: rgb(155,98,175);
+}
+code.constance {
+    color: rgb(209,125,100);
+}

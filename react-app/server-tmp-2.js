@@ -2,7 +2,7 @@
  * @Author: Kanata You 
  * @Date: 2020-11-02 21:10:45 
  * @Last Modified by: Kanata You
- * @Last Modified time: 2020-11-10 15:34:28
+ * @Last Modified time: 2020-11-10 14:55:28
  */
 
 const express = require('express');
@@ -21,7 +21,12 @@ const decodeIPC = str => str.split("$s").join("/").split("$d").join(".");
 
 
 let config = {
-    storagePath: "e:/zone/storage"
+    storagePath: "e:/zone/storage",
+    language: [{
+        name: "JavaScript",
+        reg: ["js"],
+        highlighter: text => {}
+    }]
 };
 
 
@@ -213,12 +218,4 @@ app.get("/clearStorage", (req, res) => {
             res.send(files);
         }
     });
-});
-
-
-const server = app.listen(2369, () => {
-    const addr = server.address().address;
-    const host = addr === "::" ? "127.0.0.1" : addr;
-    const port = server.address().port;
-    console.log("Back-end server opened at http://" + host + ":" + port);
 });
